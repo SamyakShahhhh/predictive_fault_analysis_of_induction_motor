@@ -62,14 +62,13 @@ Raw time-domain signals are not directly fed into the classifier. Instead, meani
 ```
 motor_fault_project/
 │
-├── main.py              # Entry point — runs all 6 stages in sequence
+├── main.py              # Entry point — runs all 5 stages in sequence
 ├── config.py            # All constants: paths, feature names, fault labels
 ├── data_loader.py       # Stage 1 & 2: load CSVs and assign fault_type labels
 ├── visualize.py         # Stage 3.1: exploratory data analysis plots
 ├── preprocess.py        # Stage 3.2: scaling and feature selection
 ├── train.py             # Stage 4: train all 6 models
 ├── evaluate.py          # Stage 5: accuracy, confusion matrix, F1, CV scores
-├── predict.py           # Stage 6: predict fault on new input samples
 │
 └── plots/               # All saved charts (auto-created on first run)
 ```
@@ -114,7 +113,7 @@ Merges all files into one DataFrame. Assigns integer `fault_type` labels (0–6)
 Generates exploratory plots: class distribution, feature distributions, correlation heatmap, and box plots per fault type.
 
 ### Stage 3.2 — Preprocessing
-- Splits data into 80% train / 20% test
+- Splits data into 70% train / 30% test
 - Applies `StandardScaler` to normalize features
 - Uses `SelectKBest` (ANOVA F-test) to select the top 10 most discriminative features
 
@@ -129,9 +128,6 @@ For each model:
 - 5-Fold Stratified Cross-Validation score
 - Per-class F1 bar chart (saved as PNG)
 - Final model comparison chart
-
-### Stage 6 — Prediction Demo
-Picks the best-performing model and runs it on 3 random samples from the test set to demonstrate single-sample prediction.
 
 ---
 

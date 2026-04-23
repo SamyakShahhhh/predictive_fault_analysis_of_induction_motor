@@ -1,6 +1,6 @@
 # =============================================================================
 # main.py — Entry point
-# Run this file to execute the full pipeline from Stage 1 to Stage 6
+# Run this file to execute the full pipeline from Stage 1 to Stage 5
 #
 # Usage:
 #   python main.py
@@ -13,7 +13,6 @@ from visualize   import run_all_plots
 from preprocess  import run_preprocessing
 from train       import train_all_models
 from evaluate    import run_evaluation
-from predict     import run_prediction_demo
 
 
 def main():
@@ -102,18 +101,24 @@ def main():
         accuracy_scores = {}
 
     # =========================================================================
-    # STAGE 6 — Prediction demo
+    # STAGE 5.5 — Metrics Summary Table
     # =========================================================================
-    print("\n" + "=" * 60)
-    print("STAGE 6 — PREDICTION DEMO")
-    print("=" * 60)
+    import pandas as pd
+    from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
-    if accuracy_scores and models:
-        run_prediction_demo(
-            models, accuracy_scores, scaler, selector, X_test_raw, y_test
-        )
-    else:
-        print("[SKIP] No models available for prediction demo.")
+    rows = []
+    for model_name, preds in predictions.items():
+        rows.append({
+            "Model":     model_name,
+            "Accuracy":  round(accuracy_score(y_test, preds), 4),
+            "Precision": round(precision_score(y_test, preds, average="weighted", zero_division=0), 4),
+            "Recall":    round(recall_score(y_test, preds, average="weighted", zero_division=0), 4),
+            "F1 Score":  round(f1_score(y_test, preds, average="weighted", zero_division=0), 4),
+        })
+
+    df_metrics = pd.DataFrame(rows)
+    print("\nMETRICS SUMMARY TABLE")
+    print(df_metrics.to_string(index=False))
 
     # =========================================================================
     print("\n" + "=" * 60)

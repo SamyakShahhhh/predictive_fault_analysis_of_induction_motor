@@ -48,8 +48,8 @@ def combine_and_label(dataframes):
 
     Rules
     -----
-    - Fault files : label==0 rows → fault class, label==1 rows → healthy (0)
-    - Healthy file : all rows → healthy (0)
+    - Fault files : label==0 rows → fault class only. label==1 rows discarded.
+    - Healthy file : all rows → healthy (0). This is the sole source for class 0.
 
     Returns
     -------
@@ -57,21 +57,20 @@ def combine_and_label(dataframes):
     """
     all_pieces = []
 
+    print("\n[Discarding contaminated healthy-reference rows from fault files...]")
     for key, fault_type_id in FAULT_LABEL_MAP.items():
         df = dataframes[key].copy()
 
-        # label==0 rows are the actual fault samples
+        # label==0 rows are the actual fault samples — keep only these
         fault_rows = df[df['label'] == 0].copy()
         fault_rows['fault_type'] = fault_type_id
 
-        # label==1 rows are healthy samples embedded in the fault file
-        healthy_rows = df[df['label'] == 1].copy()
-        healthy_rows['fault_type'] = 0
+        discarded = (df['label'] == 1).sum()
+        print(f"    [{key}] fault rows kept: {len(fault_rows)}  |  healthy-ref rows discarded: {discarded}")
 
         all_pieces.append(fault_rows)
-        all_pieces.append(healthy_rows)
 
-    # Add all rows from the dedicated healthy file
+    # Dedicated healthy file is the only source for class 0
     healthy_df = dataframes['healthy'].copy()
     healthy_df['fault_type'] = 0
     all_pieces.append(healthy_df)

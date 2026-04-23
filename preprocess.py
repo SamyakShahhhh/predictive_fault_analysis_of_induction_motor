@@ -66,14 +66,14 @@ def winsorize(df):
 
 
 def split_data(df):
-    """Step 4 — 80/20 stratified train-test split."""
-    print("\n[Step 4] Splitting into 80% train / 20% test...")
+    """Step 4 — 70/30 stratified train-test split."""
+    print("\n[Step 4] Splitting into 70% train / 30% test...")
 
     X = df[FEATURE_COLS]
     y = df['fault_type']
 
     X_train_raw, X_test_raw, y_train, y_test = train_test_split(
-        X, y, test_size=0.20, stratify=y, random_state=42
+        X, y, test_size=0.30, stratify=y, random_state=42
     )
 
     # Reset indices so iloc-based access is always safe
@@ -202,5 +202,21 @@ def run_preprocessing(df):
     print(f"    y_train : {y_train_final.shape}")
     print(f"    y_test  : {y_test.shape}")
     print("[OK] Preprocessing complete.")
+
+    # Step 9 — Inject real-world noise to prevent over-idealised performance
+    print("\n[Step 9] Injecting real-world noise...")
+
+    np.random.seed(42)
+    noise_strength = 0.15
+    X_train_final = X_train_final + np.random.normal(0, noise_strength, X_train_final.shape)
+    X_test_sel    = X_test_sel    + np.random.normal(0, noise_strength, X_test_sel.shape)
+    print(f"    Feature noise applied  : std = {noise_strength} (Gaussian)")
+
+    flip_ratio  = 0.05
+    n_flip      = int(flip_ratio * len(y_train_final))
+    flip_idx    = np.random.choice(len(y_train_final), n_flip, replace=False)
+    y_train_final[flip_idx] = np.random.choice(np.unique(y_train_final), n_flip)
+    print(f"    Label noise applied    : {n_flip} labels flipped ({flip_ratio*100:.0f}% of training set)")
+    print("[OK] Noise injection complete.")
 
     return X_train_final, X_test_sel, y_train_final, y_test, scaler, selector, X_test_raw

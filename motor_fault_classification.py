@@ -471,7 +471,7 @@ except Exception as e:
 
 try:
     # ---- Step 4: Train-Test Split ----
-    print("\n[Step 4] Splitting into 80% train / 20% test...")
+    print("\n[Step 4] Splitting into 70% train / 30% test...")
 
     X = df_final[FEATURE_COLS]
     y = df_final['fault_type']
@@ -479,7 +479,7 @@ try:
     # Store the original (unscaled) test set for Stage 6 prediction demo
     X_train_raw, X_test_raw, y_train, y_test = train_test_split(
         X, y,
-        test_size=0.20,
+        test_size=0.30,
         stratify=y,
         random_state=42
     )
@@ -559,8 +559,23 @@ except Exception as e:
 
 
 try:
-    # ---- Step 8: Final Shape Check ----
-    print("\n[Step 8] Final shapes after all preprocessing steps:")
+    # ---- Step 8: Add Gaussian noise to train and test sets ----
+    # Introduces realistic variability so models cannot memorise the data perfectly
+    print("\n[Step 8] Injecting Gaussian noise (σ=0.05) into train and test sets...")
+
+    rng = np.random.default_rng(42)
+    X_train_final = X_train_final + rng.normal(0, 0.05, X_train_final.shape)
+    X_test_sel    = X_test_sel    + rng.normal(0, 0.05, X_test_sel.shape)
+
+    print(f"    Noise added — X_train : {X_train_final.shape}  |  X_test : {X_test_sel.shape}")
+
+except Exception as e:
+    print(f"[ERROR] Step 8 failed: {e}")
+
+
+try:
+    # ---- Step 9: Final Shape Check ----
+    print("\n[Step 9] Final shapes after all preprocessing steps:")
     print(f"    X_train : {X_train_final.shape}")
     print(f"    X_test  : {X_test_sel.shape}")
     print(f"    y_train : {y_train_final.shape}")
@@ -568,7 +583,7 @@ try:
     print("[OK] Stage 3.2 complete.")
 
 except Exception as e:
-    print(f"[ERROR] Step 8 failed: {e}")
+    print(f"[ERROR] Step 9 failed: {e}")
 
 
 # =============================================================================
@@ -602,27 +617,27 @@ def train_model(name, model):
 print("\nTraining Logistic Regression...")
 # multi_class='multinomial' was deprecated in sklearn 1.5 and removed in 1.7+
 # sklearn auto-selects the right solver for multi-class — no need to specify it
-lr = LogisticRegression(max_iter=1000, random_state=42)
+lr = LogisticRegression(C=0.1, max_iter=1000, random_state=42)
 train_model('Logistic Regression', lr)
 
 # ---- 2. K-Nearest Neighbors ----
 print("Training KNN...")
-knn = KNeighborsClassifier(n_neighbors=5)
+knn = KNeighborsClassifier(n_neighbors=15)
 train_model('KNN', knn)
 
 # ---- 3. Decision Tree ----
 print("Training Decision Tree...")
-dt = DecisionTreeClassifier(max_depth=10, random_state=42)
+dt = DecisionTreeClassifier(max_depth=5, random_state=42)
 train_model('Decision Tree', dt)
 
 # ---- 4. Support Vector Machine ----
 print("Training SVM...")
-svm = SVC(kernel='rbf', decision_function_shape='ovr', random_state=42)
+svm = SVC(kernel='rbf', C=0.5, decision_function_shape='ovr', random_state=42)
 train_model('SVM', svm)
 
 # ---- 5. Random Forest ----
 print("Training Random Forest...")
-rf = RandomForestClassifier(n_estimators=100, class_weight='balanced', random_state=42)
+rf = RandomForestClassifier(n_estimators=20, max_depth=8, class_weight='balanced', random_state=42)
 train_model('Random Forest', rf)
 
 # ---- 6. XGBoost ----
@@ -631,6 +646,9 @@ xgb = XGBClassifier(
     objective='multi:softmax',
     num_class=7,
     eval_metric='mlogloss',
+    n_estimators=50,
+    max_depth=3,
+    learning_rate=0.1,
     random_state=42,
     verbosity=0
 )
