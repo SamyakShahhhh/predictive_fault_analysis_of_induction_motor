@@ -13,8 +13,15 @@ matplotlib.use('Agg')
 # PATHS
 # =============================================================================
 
-DATA_DIR  = r"C:\Users\Swayam\Downloads\claude_dataset"
-PLOTS_DIR = r"C:\Users\Swayam\Downloads\motor_fault_project\plots"
+# Base directory of this project (wherever the repo is cloned)
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Dataset folder: set MOTOR_DATA_DIR env var to override, else expects a
+# 'data/' folder sitting next to this project directory
+DATA_DIR  = os.environ.get("MOTOR_DATA_DIR", os.path.join(_BASE_DIR, "data"))
+
+# Plots are always saved inside the project under plots/
+PLOTS_DIR = os.path.join(_BASE_DIR, "plots")
 
 # Create plots folder if it doesn't exist yet
 os.makedirs(PLOTS_DIR, exist_ok=True)
